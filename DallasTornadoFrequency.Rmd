@@ -1,0 +1,278 @@
+---
+title: "DSC520 Final Project"
+author: "Carla Harrell"
+date: "11/13/2019"
+output:
+  word_document:
+    df_print: paged
+  html_document:
+    df_print: paged
+always_allow_html: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+#Introduction 
+
+#Tornadoes are formed when hot air and cold air meet in a powerful storm, and the warm air begins spiraling upward, creating a funnel cloud. This funnel cloud forces objects on the ground and in the air around and upward, and can be strong enough to uproot trees, move cars and tear apart buildings. This extremely energetic air current is part of a special, very tall storm called a supercell.
+
+#The supercells that make tornadoes form when a large mass of cold air moves over a large mass of warm air. This situation is highly unstable, because the warm air is lighter than the cold air. The greater the temperature difference, the more unstable the situation. Winds are generated as the warm air moves up and through the cold air and the cold air moves down and around the warm air. If the warm air contains a large amount of water vapor, it tends to condense into clouds as it moves up and cools.
+
+#When this movement of warm air upward is energetic enough, the moving air starts to twist on its way up, creating the potential for a funnel cloud. These funnel clouds are the effect of rapidly moving and spinning warm air and condensing water vapor going upward and spiraling.
+
+#Research questions 
+#1.	What is the frequency of occurrence of tornadoes in Dallas?
+#2.	What category of Tornadoes?
+#3.	How many occurrences per year?
+#4.	What time of the season does the storms occur?
+#5.	What is the average length of miles of the Tornadoes?
+
+#Approach
+#1.	Get the number of observations (rows) and variables, and a head of the first cases. Review the data to look for the data types, zeros, infinite numbers and missing values.  Removes all variables with NA, zeros or high variables.
+#2.	Analyze numerical and categorical at the same to see what contributes the occurrence of tornadoes.  
+#3.	Use head and structure to determine the type of variables and review the data to see if any data need to be removed.
+#4.	Plot the date looking for distributions of the day.  Form a histogram to find the distribution of the variables.
+#5.	Use summary statistics to explore the distribution of the variables. 
+#6.	Find out the correlation between the variables by using correlation matrix and try to find out which variables #7.	Build a regression model to predict the outcome variable.
+
+#Because the orignal dataset was limited with Dallas, Texas, I used a dataset for all the counties in Texas and then narrowed it down to Dallas.
+
+```{r}
+FILENAME     <- "c:/users/carla/OneDrive/Documents/R/Assignments/tornado_new.csv"
+
+#FILENAME     <- "tornado_new.csv"
+
+tornado_df <- read.csv(FILENAME, stringsAsFactors = FALSE)
+
+### explore the data 
+
+head(tornado_df)
+
+```
+
+## Including Plots
+```{r}
+library(tidyverse)
+
+# taking a quick look
+glimpse(tornado_df)
+
+sapply(tornado_df, function(x) sum(is.na(x)))           # no missing values in the data 
+
+summary(tornado_df)
+
+########## dropping rows where values are -999
+tornado_df = tornado_df[!tornado_df$Start.Lat ==-999,] 
+str(tornado_df)
+summary(tornado_df)
+head(tornado_df)
+
+
+```
+
+###Exploring the time of the year tornadoes most likely to occur.
+
+
+```{r}
+library(plotly)
+library(magrittr)
+# Tornadoes by the year from 1880 to 2019 in the Texas counties.
+summary(tornado_df$Year)
+# Median number of tornadoes occured around 1985
+# Mean of tornadoes occured around 1982
+#x=year y = number of tornadoes
+qplot(tornado_df$Year,
+      geom="histogram",
+      binwidth = 0.5,  
+      main = "Tornados by Year", 
+      xlab = "Years", 
+      fill=I("blue"))
+# There is a negative skew from  around 1880 to 1950.  It is possible they not had proper technology to handle the data.
+# In 2015 there is a peak of tornadoes occuring within Texas.
+```
+# Exploring the time of the year tornadoes most likely to occur.
+```{r}
+
+#Modifying months
+months <- as.integer(format(as.Date(tornado_df$Date, format="%m/%d/%Y"),"%m"))
+summary(months)
+# From this data storms will most likely occur between April and June.
+
+#x=months y = number of tornadoes
+qplot(months,
+      geom="histogram",
+      main = "Tornados by Month", 
+      xlab = "Months",  
+      fill=I("blue"),
+      xlim = c(0,12),
+      binwidth=0.4)
+
+```
+
+#Exploring the time of day tornadoes most likely to occur.
+```{r}
+#Correcting time
+tornado_df$time <- as.POSIXct(strptime(tornado_df$Time_CST, format="%H:%M:%S"))
+R <- paste('1970-01-01')
+R <- strptime(tornado_df$time, format="%Y-%m-%d %H:%M:%S")
+
+#x=Time of Day y = number of tornadoes
+plot_ly(x = (as.numeric(R) * 1000), type = "histogram") %>% 
+  layout(xaxis=list(type="date", tickformat="%H:%M:%S"))
+# Looking at the histogram, most likely to occur between 13:30 and 22:00.  
+# The data is negatively skewed and this could account for the tracking of the data between 1800 to 1950.
+
+```
+
+# Exploring tornado intensity
+```{r}
+# Most tornadoes are category 0
+#x=rating y = number of tornadoes
+
+qplot(tornado_df$Rating,
+      geom="histogram",
+      main = "Tornados by Intensity/Rating", 
+      xlab = "Ratings",  
+      fill=I("blue"),
+      binwidth=0.5)
+
+```
+# Exploring tornado by counties in Texas
+
+```{r}
+# More tornadoes have occured in Johnson county followed by Dallas and Tarrant. 
+#x=Counties In Texas y = number of tornadoes
+ggplot(data = tornado_df,aes(x=County))+
+  geom_bar(fill=I("blue"))+ theme(axis.text.x = element_text(angle = 60, hjust = 1))+ ggtitle("Tornadoes By Counties In Texas")
+```
+
+# Analyzing data through correlation.
+```{r}
+
+library(lubridate)
+library(dplyr)
+
+
+new_data = tornado_df %>% mutate(Month = month(mdy(tornado_df$Date)), Day = day(mdy(tornado_df$Date))) %>% select(-County, -Date, -Time_CST, -time)
+
+cor(new_data)
+
+#Model to explore linear correlations
+library(ggplot2)
+#Rating ~ Length
+ggplot(data = new_data, aes(x = Rating, y = Length)) + ggtitle("Rating ~ Length") +
+  geom_point() + geom_smooth(method = "lm")
+#"Length ~ Width"
+ggplot(data = new_data, aes(x = Length, y = Width)) + ggtitle("Length ~ Width") +
+  geom_point() + geom_smooth(method = "lm")
+#"End.Long ~ Start.Lat"
+ggplot(data = new_data, aes(x = End.Long, y = Start.Lat)) + ggtitle("End.Long ~ Start.Lat") +
+  geom_point() + scale_y_log10() + geom_smooth(method = "lm")
+#"End.Lat ~ Start.Lat"
+ggplot(data = new_data, aes(x = End.Lat, y = Start.Lat)) + ggtitle("End.Lat ~ Start.Lat") +
+  geom_point() + scale_y_log10() + geom_smooth(method = "lm")
+#"Width ~ Rating"
+ggplot(data = new_data, aes(x = Width, y = Rating)) + ggtitle("Width ~ Rating") +
+  geom_point() + geom_smooth(method = "lm")
+#"Start.Long ~ Year"
+ggplot(data = new_data, aes(x = Start.Long, y = Year)) + ggtitle("Start.Long ~ Year") +
+  geom_point() + scale_y_log10() + geom_smooth(method = "lm") 
+#"End.Lat ~ Start.Lat"
+ggplot(data = new_data, aes(x = End.Lat, y = Start.Lat)) + ggtitle("End.Lat ~ Start.Lat") +
+  geom_point() + scale_y_log10() + geom_smooth(method = "lm")
+#"Year ~ Start.Long"
+ggplot(data = new_data, aes(x = End.Lat, y = Start.Long)) + ggtitle("Year ~ Start.Long") +
+  geom_point() + geom_smooth(method = "lm")
+
+
+```
+###Linear Models
+
+```{r}
+library(ggplot2)
+reg_lm1 <- lm(Start.Lat~ End.Lat,data=tornado_df)
+summary(reg_lm1)
+
+ggplot(data = new_data, aes(x = End.Lat, y = Start.Lat)) + ggtitle("End.Lat ~ Start.Lat") +
+  geom_point() + scale_y_log10() + geom_smooth(method = "lm")
+
+
+reg_lm3 <- lm(Length~ Width,data=tornado_df)
+
+summary(reg_lm3)   
+
+# Linear Model
+library(ggplot2)
+ggplot(data = tornado_df, aes(x = Length, y = Width)) + ggtitle("Length ~ Width") +
+  geom_point() + 
+  geom_smooth(method = "lm", se = FALSE)
+
+```
+
+
+# The original question was to demonostrate the frequency of storms that occured in Dallas, Texas.  
+
+```{r}
+dallas = tornado_df[tornado_df$County =='Dallas',] 
+str(dallas)
+summary(dallas)
+
+
+## histograms for Dallas 
+
+#On an average it appears around 9 tornadoes occurred in Dallas yearly from 1952 to 2019 with 40 percent being category 0.
+qplot(dallas$Year,
+      geom="histogram",
+      binwidth = 0.5,  
+      main = "Tornados by Year for Dallas County", 
+      xlab = "Years",  
+      fill=I("blue"))
+
+
+qplot(dallas$Rating,
+      geom="histogram",
+      main = "Tornados by Intensity/Rating for Dallas County", 
+      xlab = "Ratings",  
+      fill=I("blue"),
+      binwidth=0.5)
+
+library(ggplot2)
+
+```
+## Summary
+
+#1. Summarize the problem statement you addressed.
+
+#On October 20, 2019 around 10 tornadoes hit Dallas, Texas.  It left numerous individuals with homes. There were no notice signs until the tornadoes started to cause a lot of harm.  Many began to say Dallas is not a decent place to live because it is in Tornado Alley which is where a high frequency of storms occurs. Because the storms occurred within a 2-mile radius of my home, it clearly is the motivation of this dataset. The quest to search for the best dataset began for the frequency of tornadoes within the Dallas, Texas area. There was not a lot of information in the first dataset I found.  However, I found another that gave more information and listed the whole state of Texas.  From those datasets, I can provide the frequency of tornadoes that occur in Dallas, Texas.
+
+#2. Summarize how you addressed this problem statement (the data used and the methodology employed).
+
+#In the original data set, I could not find any correlation of the data.  After the 3rd week, I was able to find a dataset with counties in Texas at https://data.world/dhs/historical-tornado-tracks/workspace/file?filename=Historical_Tornado_Tracks.csv
+
+#In my approach, I cleaned the informational indexes to expel all NA's and - 999 to help comprehend the information. At that point, I plotted the information utilizing ggplots, and qqplots. As I was endeavoring to plot dated related factors, I needed to isolate the dates with the administrator work so as to plot the information. The date variable was an integer. The lubridate package was used to subset the dates to make date formatting simpler.
+
+#In this clean dataset, I could not find out everything I wanted to know about the data.  The histograms were reviewed with ggplots and qqplots histogram Then, correlations were performed on the variables.  From there two linear regression models on data that correlated.  However, the information related more to composition of a tornado like width, length, longitude, latitude.  Obviously, those would relate.  I added loess function in a few of the plots to see if there was any correlation also. Because this dataset did not provide the right information relating to weather conditions, I decided to narrow my research to the city of Dallas with yearly frequency of tornadoes and the category of tornadoes.
+
+#3.Summarize the interesting insights that your analysis provided.
+
+#In the state of Texas, the median number of tornadoes occurred around 1985 with the mean of tornadoes occurring around 1982.  From this data, tornadoes will most likely occur between April and June.  Looking at the histogram, most likely to occur between 13:30 and 22:00 central time and most tornadoes are EF0.  The counties where most of tornadoes have occurred were Johnson county followed by Dallas and Tarrant.
+
+#On an average, it appears 9 tornadoes occur in Dallas yearly from 1952 to 2019 with a 40% chance of it being an EF3 category.  The average length within Dallas is 2 miles.  The tornadoes more likely to occur between 1200 and 20:00 central time.
+
+#4.Summarize the implications to the consumer (target audience) of your analysis.
+
+#Tornadoes can hit within a matter of seconds.  Whenever there are it is best to try to get to a safe area.  Some are saying don’t purchase homes in Dallas.   When looking at the graphs, they can strike anywhere in the state of Texas. It is likely they will occur in Dallas and Dallas is ranked 3 on the list of counties. 
+
+#Tornadoes can hit inside only seconds. At whatever point there are it is ideal to attempt to get to a protected territory. Some are stating don't buy homes in Dallas. When taking a gander at the diagrams, they can strike anyplace in the province of Texas. It is likely they will happen in Dallas and Dallas is positioned 3 on the rundown of areas.
+
+#5.Discuss the limitations of your analysis and how you, or someone else, could improve or build on it.
+
+#Based upon my dataset, the categories limit the use to predict tornadoes in Dallas, From the data, start and end shows positive correlation.  In order to predict tornadoes, other weather conditions datasets should be available.  From there I could predict patterns.  I plan on in the future bringing other datasets that could provide more warnings.  I came close to being in the Tornado the day that it occurred.  I was two hours away from being in the path of that storm.  There was no warning until the tornado struck from the news.
+
+#In view of my dataset, the categories limited my ability to predict tornadoes in Dallas forming.  Some dataset does correlate, but only with the composition of a tornado.  To anticipate tornadoes, other climate conditions datasets ought to be accessible. From that point I could foresee designs. I plan on later bringing different datasets that could give more alerts. I came close to being in the Tornado path the day it occurred.  I There was no warning until the tornado struck from the news.  In the future, I hope someone can give phone alerts to let everyone know they are coming.  It is miracle that no one perished from the tornado in Dallas.
+
+
