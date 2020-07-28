@@ -1,6 +1,7 @@
 # Tornado-Frequency-of-Counties-in-Texas
-
-#Problem Statement:
+#
+Problem Statement:
+#
 ###
 On October 20, 2019 around 10 tornadoes hit Dallas, Texas.  It left numerous individuals with homes. 
 There were no notice signs until the tornadoes started to cause a lot of harm.  Many began to say 
@@ -11,11 +12,13 @@ Dallas, Texas area. There was not a lot of information in the first dataset I fo
 another that gave more information and listed the whole state of Texas.  From those datasets, I can provide
 the frequency of tornadoes that occur in Dallas, Texas. 
 ###
-#Datasets: 
- ###
- https://data.world/dhs/historical-tornado-tracks/workspace/file?filename=Historical_Tornado_Tracks.csv
- ###
-
+#
+Datasets: 
+# 
+###
+https://data.world/dhs/historical-tornado-tracks/workspace/file?filename=Historical_Tornado_Tracks.csv
+###
+#
 #Method:
 ###
 This model was created using R using time-series.
