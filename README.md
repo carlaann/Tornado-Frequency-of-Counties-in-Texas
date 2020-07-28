@@ -19,7 +19,8 @@ Datasets:
 https://data.world/dhs/historical-tornado-tracks/workspace/file?filename=Historical_Tornado_Tracks.csv
 ###
 #
-#Method:
+Method:
+#
 ###
 This model was created using R using time-series.
 ###
@@ -29,9 +30,9 @@ At that point, I plotted the information utilizing ggplots, and qqplots. As I wa
 factors, I needed to isolate the dates with the administrator work to plot the information. The date variable was an
 integer. The lubridate package was used to subset the dates to make date formatting simpler. In this clean dataset, 
 I could not find out everything I wanted to know about the data.  The histograms were reviewed with ggplots and qqplots 
-histogram Then, correlations were performed on the variables.  From there two linear regression models on data that correlated.  
-However, the information related more to composition of a tornado like width, length, longitude, latitude.  Obviously,
-those would relate.  I added loess function in a few of the plots to see if there was any correlation also. Because this 
-dataset did not provide the right information relating to weather conditions, I decided to narrow my research to the city of 
-Dallas with yearly frequency of tornadoes and the category of tornadoes.
+histogram Then, correlations were performed on the variables.  From there two linear regression models on data that 
+correlated.  However, the information related more to composition of a tornado like width, length, longitude, latitude.  
+Obviously, those would relate.  I added loess function in a few of the plots to see if there was any correlation also. 
+Because this dataset did not provide the right information relating to weather conditions, I decided to narrow my 
+research to the city of Dallas with yearly frequency of tornadoes and the category of tornadoes.
 ###
