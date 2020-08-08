@@ -17,9 +17,9 @@ the frequency of tornadoes that occur in Dallas, Texas.
 https://data.world/dhs/historical-tornado-tracks/workspace/file?filename=Historical_Tornado_Tracks.csv
 #
 - a) Prerequisite
- - R Studio
- - ggplot
- - qqplots
+  - R Studio
+  - ggplot
+  - qqplots
 #
 3) Usage
 # 
